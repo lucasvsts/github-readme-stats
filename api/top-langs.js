@@ -42,6 +42,7 @@ export default async (req, res) => {
     disable_animations,
     hide_progress,
     stats_format,
+    lang_colors,
   } = req.query;
   res.setHeader("Content-Type", "image/svg+xml");
 
@@ -124,6 +125,18 @@ export default async (req, res) => {
       size_weight,
       count_weight,
     );
+
+    // Custom: override language colors by rank (e.g. lang_colors=FFFFFF,D9D9D9,B3B3B3).
+    const customColors = parseArray(lang_colors).filter((c) =>
+      /^[0-9a-fA-F]{3,8}$/.test(c),
+    );
+    if (customColors.length) {
+      Object.values(topLangs)
+        .sort((a, b) => b.size - a.size)
+        .forEach((lang, i) => {
+          lang.color = `#${customColors[Math.min(i, customColors.length - 1)]}`;
+        });
+    }
     const cacheSeconds = resolveCacheSeconds({
       requested: parseInt(cache_seconds, 10),
       def: CACHE_TTL.TOP_LANGS_CARD.DEFAULT,
